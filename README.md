@@ -1,2 +1,2 @@
-# examples-of-code
-Examples of code.
+# Examples of code
+This repository has a set of samples of code to...
