@@ -1,0 +1,116 @@
+﻿@model MTPAdmin.Models.MTPAdminViewModels.Clients
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<h4>Editar</h4>
+<hr />
+<form asp-action="Edit">
+    <div class="row">
+        <div class="col-sm-12 col-md-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="CompanyName" class="control-label"></label>
+                @Html.DisplayFor(model => model.CompanyName)
+            </div>
+            <div class="form-group">
+                <label asp-for="CompanySizeName" class="control-label"></label>
+                @Html.DisplayFor(model => model.CompanySizeName)
+            </div>
+            <div class="form-group">
+                <label asp-for="UserName" class="control-label"></label>
+                @Html.DisplayFor(model => model.UserName)
+            </div>
+            <div class="form-group">
+                <label asp-for="Phone" class="control-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Language" class="control-label"></label>
+                @Html.DisplayFor(model => model.Language)
+            </div>
+            <div class="form-group">
+                <label asp-for="Country" class="control-label"></label>
+                @Html.DisplayFor(model => model.Country)
+            </div>
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-sm-12 col-md-4">
+            <div class="form-group">
+                <label asp-for="AddDate" class="control-label"></label>
+                <input asp-for="AddDate" class="form-control" />
+                <span asp-validation-for="AddDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RenewalDate" class="control-label"></label>
+                <input asp-for="RenewalDate" class="form-control" />
+                <span asp-validation-for="RenewalDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LicenceType" class="control-label"></label>
+                @Html.DropDownList("licenceType", ViewBag.ComboTiposLicencia as IEnumerable<SelectListItem>, new { @class = "dropdown-toggle btn btn-default btn-white no-bold" })
+                <span asp-validation-for="LicenceType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="YearPayment" /> @Html.DisplayNameFor(model => model.YearPayment)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="PackageID" class="control-label"></label>
+                @Html.DropDownList("package", ViewBag.ComboPackages as IEnumerable<SelectListItem>, new { @class = "dropdown-toggle btn btn-default btn-white no-bold" })
+                <span asp-validation-for="PackageID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DueDate" class="control-label"></label>
+                <input asp-for="DueDate" class="form-control" />
+                <span asp-validation-for="DueDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ValidClient" /> @Html.DisplayNameFor(model => model.ValidClient)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="DbSchema" class="control-label"></label>
+                <input asp-for="DbSchema" class="form-control" />
+                <span asp-validation-for="DbSchema" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DbName" class="control-label"></label>
+                <input asp-for="DbName" class="form-control" />
+                <span asp-validation-for="DbName" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != "")
+    {
+        <div class="form-group">
+            <span class="text-danger"><b>@ViewBag.Error</b></span>
+        </div>
+    }
+
+    <div class="form-group">
+        <input type="submit" value="Grabar" class="btn btn-success" />
+        <a asp-action="Index" class="btn btn-info">Volver</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

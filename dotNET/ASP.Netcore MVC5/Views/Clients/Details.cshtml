@@ -1,0 +1,210 @@
+﻿@model MTPAdmin.Models.MTPAdminViewModels.Clients
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<h4>Detalle</h4>
+<div>
+    <hr />
+    <div class="row">
+        <div class="col-sm-12 col-md-6">
+            <dl class="dl-horizontal">
+                <dt>
+                    @Html.DisplayNameFor(model => model.CompanyName)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.CompanyName)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.CompanySizeName)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.CompanySizeName)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.UserName)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.UserName)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.Phone)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.Phone)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.Language)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.Language)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.Country)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.Country)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.Address)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.Address)
+                </dd>
+            </dl>
+        </div>
+        <div class="col-sm-12 col-md-6">
+            <dl class="dl-horizontal">
+                <dt>
+                    @Html.DisplayNameFor(model => model.AddDate)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.AddDate)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.RenewalDate)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.RenewalDate)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.LicenceTypeName)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.LicenceTypeName)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.YearPayment)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.YearPayment)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.PackageID)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.PackageID)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.DueDate)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.DueDate)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.ValidClient)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.ValidClient)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.DbSchema)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.DbSchema)
+                </dd>
+                <dt>
+                    @Html.DisplayNameFor(model => model.DbName)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.DbName)
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Edit" class="btn btn-success" asp-route-id="@Model.Id">Editar</a>
+    <a asp-action="Renewal" asp-route-id="@Model.Id" class="btn btn-primary">Calcular Renovación</a>
+    <a asp-action="Index" class="btn btn-info">Volver</a>
+</div>
+
+<hr />
+<div>
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item"> <a href="#auditoria" data-toggle="tab" role="tab" aria-expanded="true" class="nav-link active"> Info de Auditoría </a> </li>
+        <li class="nav-item"> <a href="#pagos" data-toggle="tab" role="tab" aria-expanded="false" class="nav-link"> Info de Pagos </a> </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane fade in active" id="auditoria">
+            <h4>Info de Auditoría</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.history[0].Date)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.history[0].Description)
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.history)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Date)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Description)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="pagos" role="tabpanel">
+            <h4>Info de Pagos</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.payments[0].Date)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.payments[0].Detail)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.payments[0].Price)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.payments[0].YearPayment)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.payments[0].DueDate)
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.payments)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Date)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Detail)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Price)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.YearPayment)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.DueDate)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+

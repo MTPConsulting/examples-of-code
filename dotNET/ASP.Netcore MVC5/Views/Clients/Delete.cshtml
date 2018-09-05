@@ -1,0 +1,129 @@
+﻿@model MTPAdmin.Models.MTPAdminViewModels.Clients
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div>
+    <h4>Eliminar</h4>
+    @if (ViewBag.Error == "")
+    {
+        <h5 class="text-danger">¿Confirma que desea bloquear el acceso a este cliente?</h5>
+    }
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.CompanyName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.CompanyName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Phone)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Phone)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Country)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Country)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Language)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Language)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Address)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Address)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.AddDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.AddDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.RenewalDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.RenewalDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DueDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DueDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LicenceType)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LicenceType)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.YearPayment)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.YearPayment)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DbSchema)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DbSchema)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.DbName)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DbName)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ValidClient)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ValidClient)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.CompanySizeId)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.CompanySizeId)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.PackageID)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.PackageID)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.UserID)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.UserID)
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        @if (ViewBag.Error != "")
+        {
+            <div class="form-group">
+                <span class="text-danger"><b>@ViewBag.Error</b></span>
+            </div>
+        }
+        else
+        {
+            <input type="submit" value="Bloquear" class="btn btn-danger" />
+        }
+        <a asp-action="Index" class="btn btn-info">Volver</a>
+    </form>
+</div>
