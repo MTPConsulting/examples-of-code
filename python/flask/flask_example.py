@@ -51,6 +51,7 @@ def load_admin():
 
     return admin
 
+
 admin = load_admin()
 
 

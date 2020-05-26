@@ -483,7 +483,7 @@ class Profile(models.Model):
         if self.last_seen_datetime:
             now = timezone.now()
             if now > self.last_seen_datetime + timezone.timedelta(
-                         seconds=settings.USER_ONLINE_TIMEOUT):
+                    seconds=settings.USER_ONLINE_TIMEOUT):
                 return False
             else:
                 return True

@@ -1,213 +1,211 @@
-<?php 
+<?php
 
 namespace App\Http\Controllers;
 
-use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Input;
-use App\Http\Requests;
-use App\Category;
-use App\Client;
-use App\Participant;
-use App\Participation;
-use App\Country;
+use Illuminate\Support\Str;
+use App\Job;
+use App\Services\CategoryService;
+use App\Services\JobService;
+use App\Services\SubCategoryService;
 
-class RecruiterQueryController extends Controller 
+class JobController extends Controller
 {
+    /**
+    * @var JobService
+    */
+    protected $jobService;
+
+    /**
+    * @var CategoryService
+    */
+    protected $categoryService;
+
+    /**
+    * @var SubCategoryService
+    */
+    protected $subCategoryService;
+
 
     /**
     * Create a new controller instance.
     *
     * @return void
     */
-    public function __construct()
+    public function __construct(JobService $jService, CategoryService $cService, SubCategoryService $scService)
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['show', 'showCategory', 'showSubCategory']]);
+
+        $this->jobService = $jService;
+        $this->categoryService = $cService;
+        $this->subCategoryService = $scService;
     }
 
-    public function index()
-    {   
-        //Datos para los combos
-        $combos = $this->getDataCombos();
-        $categories = $combos['categories'];
-        $clients = $combos['clients'];
-        $countries = $combos['countries'];
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $categories = $this->categoryService->getCategoriesCombo();
+        $subcategories = [];
+        $subcategories_select = [];
 
-        return view('recruiterquery.index')
-            ->with("categories", $categories)
-            ->with("clients", $clients)
-            ->with("countries", $countries);
+        return view('job.create')
+            ->with('categories', $categories)
+            ->with('subcategories', $subcategories)
+            ->with('subcategories_select', $subcategories_select);
     }
 
-    public function post(Request $request) 
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
     {
-        //Valido el formulario
         $this->validateForm($request);
-        //Obtengo el archivo
-        $path = Input::file("xls_file")->getRealPath();
 
-        //Leo los datos del archivo
-        $excel = \App::make('excel');
-        $data = $excel->load($path, function($reader) {
-        })->get();
+        $job = new Job;
+        $this->saveData($job, $request);
 
-        $now = new DateTime();
-        $records = [];
-        $sheet1 = $data[0];
-
-        foreach($sheet1 as $record) {
-            //Obtengo el dni del participante
-            $dni = $record['dni'];
-
-            //Si es null no lo procesa
-            if(is_null($dni)) {
-                continue;
-            }
-
-            $participant = Participant::where('nro_documento', $dni)->first();
-            if($participant) {
-                //Si no esta habilitado o esta bloqueado no lo habilito
-                if (!$participant->st_habilitado || $participant->st_blacklist) {
-                    $habilitado = false;
-                }else {
-                    $habilitado = true;
-                }
-
-                //Si es menor a 6 mes con respecto a hoy
-                if(isset($participant->ParticipationId->fecha)) {
-                    //Obtengo los estudios cerrados del participante
-                    $participations_user = Participation::where(
-                        'xad_participantes_id', $participant->id
-                    )->whereNotNull("fecha")->get();
-
-                    foreach($participations_user as $p) { 
-                        if($p->fecha != null) {
-                            $input = new DateTime($p->fecha);
-                            $diff = $input->diff($now);
-                            //Si es menor a 6 mes con respecto a hoy
-                            if($diff->y > 0 || $diff->m > 6) {
-                                $habilitado = true;
-                            } else {
-                                $habilitado = false;
-                            }
-                        } else {
-                            $habilitado = false;
-                        }
-
-                        if(!$habilitado) {
-                            break;
-                        }
-                    }
-                } else{
-                    $habilitado = true;
-                }
-
-            } else {
-                $habilitado = true;
-            }
-
-            $date_born = new DateTime($record->fecha_de_nacimiento->toDateTimeString());
-            $interval = $date_born->diff($now);
-            $edad = $interval->format('%y años');
-
-            $record['habilitado'] = $habilitado;
-            $record['edad'] = $edad;
-            array_push($records, $record);
-        }
-
-        //Datos para los combos
-        $combos = $this->getDataCombos();
-        $categories = $combos['categories'];
-        $clients = $combos['clients'];
-        $countries = $combos['countries'];
-
-        return view('recruiterquery.index')
-            ->with("categories", $categories)
-            ->with("clients", $clients)
-            ->with("countries", $countries)
-            ->with("records", $records);
+        return redirect()->route('home');
     }
 
-    public function UploadContentXls(Request $request) 
+    /**
+     * Display the specified resource.
+     *
+     * @param $id
+     * @param $slug
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id, $slug)
     {
-        //Decodifico el json
-        $data = json_decode($request->request->get('data'));
-        $params = json_decode($request->request->get('params'));
-
-        //Obtengo los parametros del form
-        $client_id = $params->client_id;
-        $category_id = $params->category_id;
-        $number_study = $params->number_study;
-        $country_id = $params->country_id;
-
-        //Recorro los registros importados
-        foreach($data as $record) {
-            $nombre_apellido = $record->nombre_apellido;
-            $dni = $record->dni;
-            $fecha_nacimiento = $record->fecha_nacimiento;
-            $nse = $record->nse;
-            $habilitado = $record->habilitado;
-
-            $participant_check = Participant::where('nro_documento', $dni)->first();
-            if($participant_check != null) {
-                $participant_check->nombre_apellido = $nombre_apellido;
-                $participant_check->fec_nacimiento = $fecha_nacimiento;
-                $participant_check->NSE = $nse;
-                $participant_check->save();
-                $participant = $participant_check;
-            } else {
-                $p = new Participant;
-                $p->nombre_apellido = $nombre_apellido;
-                $p->fec_nacimiento = $fecha_nacimiento;
-                $p->NSE = $nse;
-                $p->nro_documento = $dni;
-                $p->st_habilitado = $habilitado;
-                $p->st_blacklist = false;
-                $p->user_id = Auth::user()->id;
-                $p->save();
-                $participant = $p;
-            }
-            
-            //Si no está la participación la agrego
-            if(Participation::where('estudio', $number_study)->where('nro_documento', $dni)->count() == 0) {
-                $pr = new Participation;
-                $pr->xad_participantes_id = $participant->id;
-                $pr->nro_documento = $dni;
-                $pr->estudio = $number_study;
-                $pr->user_id = Auth::user()->id;
-                $pr->xad_categorias_id = $category_id;
-                $pr->xad_clientes_id = $client_id;
-                $pr->id_pais = $country_id;
-                $pr->save();
-            }
-        }
-
-        return "Los postulantes han sido enviados exitosamente para su aprobación";
+        $job = $this->jobService->getJob($id, $slug);
+        return view('job.show')->with('job', $job);
     }
 
-    private function validateForm(Request $request) {
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Job  $job
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Job $job)
+    {
+        $categories = $this->categoryService->getCategoriesCombo();
+        $subcategories = $this->subCategoryService->getSubCategoriesCombo($job->category_id);
+        $subcategories_select = $job->subcategories->pluck('id')->toArray();
+
+        return view('job.edit')
+            ->with('job', $job)
+            ->with('categories', $categories)
+            ->with('subcategories', $subcategories)
+            ->with('subcategories_select', $subcategories_select);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Job  $job
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Job $job)
+    {
+        $this->validateForm($request);
+        $this->saveData($job, $request);
+
+        return redirect()->route('home');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Job  $job
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Job $job)
+    {
+        Job::destroy($job->id);
+        return redirect()->route('home');
+    }
+
+    /**
+     * Get related jobs to category
+     *
+     * @param  $id Id category
+     * @param  $slug slug category
+     * @return \Illuminate\Http\Response
+     */
+    public function showCategory($id, $slug)
+    {
+        // Get category to get jobs
+        $category = $this->categoryService->getCategory($id, $slug);
+
+        // Get jobs
+        $jobs = $this->jobService->getJobsCategory($id);
+
+        return view('job.showCategory')
+            ->with('category', $category)
+            ->with('jobs', $jobs);
+    }
+
+    /**
+     * Get related jobs to subcategory
+     *
+     * @param  $id Id category
+     * @param  $slug slug category
+     * @param  $subcategory_id Id subcategory
+     * @param  $subcategory_slug slug subcategory
+     * @return \Illuminate\Http\Response
+     */
+    public function showSubCategory($id, $slug, $subcategory_id, $subcategory_slug)
+    {
+        // Get subcategory to get jobs
+        $subcategory = $this->subCategoryService->getSubCategories($slug, $subcategory_id, $subcategory_slug);
+
+        // Get jobs
+        $jobs = $this->jobService->getJobsSubCategory($id, $subcategory_id);
+
+        return view('job.showSubCategory')
+            ->with('subcategory', $subcategory)
+            ->with('jobs', $jobs);
+    }
+
+    private function validateForm(Request $request)
+    {
         $rules = [
-            'number_study' => 'required',
-            'xls_file' => 'required|mimes:xls,xlsx'
-        ];  
+            'title' => 'required',
+            'content' => 'required',
+            'contact' => 'required',
+            'category_id' => 'required',
+            'subcategory_id' => 'required'
+        ];
         $niceNames = [
-            'number_study' => 'Número de estudio',
-            'xls_file' => 'Archivo xls'
-        ]; 
+            'title' => 'Título',
+            'content' => 'Contenido',
+            'contact' => 'Contacto',
+            'category_id' => 'Categoría',
+            'subcategory_id' => 'Sub Categoría'
+        ];
+
         $this->validate($request, $rules, [], $niceNames);
     }
 
-    private function getDataCombos() {
-        $categories = Category::lists('detalle', 'id');
-        $clients = Client::lists('razon_social', 'id');
-        $countries = Country::lists('nm_pais', 'id_pais');
- 
-        return array(
-            'categories' => $categories, 
-            'clients' => $clients,
-            'countries' => $countries
-        );
-    }
+    private function saveData($job, Request $request)
+    {
+        $job->title = $request->input('title');
+        $job->slug = Str::slug($job->title, '-');
+        $job->content = $request->input('content');
+        $job->category_id = $request->input('category_id');
+        $job->user_id = \Auth::user()->id;
+        $job->contact = $request->input('contact');
+        $job->save();
 
+        $subcategory_id = $request->get('subcategory_id');
+        $job->subcategories()->sync($subcategory_id);
+    }
 }

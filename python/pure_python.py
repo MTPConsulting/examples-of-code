@@ -191,4 +191,3 @@ class Invoice(object):
             self._get_total_invoices_day(month, day + 1)
         except ValueError:
             pass
-

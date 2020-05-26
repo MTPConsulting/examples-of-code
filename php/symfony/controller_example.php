@@ -1,163 +1,66 @@
 <?php
 
-namespace AppBundle\Controller;
+namespace App\Controller\Api\V1;
 
-use AppBundle\Entity\Sheet;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use App\Service\AssistanceService;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\FOSRestController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Annotation\Route;
 
-/**
- * Sheet controller.
- *
- * @Route("sheet")
- */
-class SheetController extends Controller
+class AssistanceController extends FOSRestController
 {
-    /**
-     * Lists all sheet entities.
-     *
-     * @Route("/", name="sheet_index")
-     * @Method({"GET", "POST"})
-     */
-    public function indexAction(Request $request)
+    private $assistanceService;
+
+    public function __construct(AssistanceService $assistanceService)
     {
-        $em = $this->getDoctrine()->getManager();
-        $repository = $em->getRepository('AppBundle:Sheet');
+        $this->assistanceService = $assistanceService;
+    }
 
-        if($request->isMethod('POST')) {
-            $month = $request->get("month");
-            $year = $request->get("year");
-            
-            if($month == null && $year == null) {
-                $sheets = $repository->findAll();;
-            } else {
-                if($month == null && $year != null) {
-                    $filter = "p.year = " . $year;
-                } else if($year == null && $month != null) {
-                    $filter = "p.month = " . $month;
-                } else {
-                    $filter = "p.month = " . $month . " and p.year = " . $year; 
-                }
-
-                $query = $repository->createQueryBuilder('p')
-                    ->where($filter)
-                    ->getQuery();
-                $sheets = $query->getResult();
-            }
-        } else {
-            $query = $repository->createQueryBuilder('p')
-                ->where("p.month = " . (int)date("m") . " and p.year = " . (int)date("Y"))
-                ->getQuery();
-            $sheets = $query->getResult();
+    /**
+     * @Rest\Post("/mobile-login-check")
+     */
+    public function mobileLogin(Request $request)
+    {
+        try {
+            $params = json_decode($request->getContent(), true);
+            $email = $params['email'];
+            $personal = $this->assistanceService->getPersonalId($email);
+        } catch (\Exception $e) {
+            return $this->json(['status' => 400, 'Message' => $e->getMessage()]);
         }
 
-        return $this->render('sheet/index.html.twig', array(
-            'sheets' => $sheets,
-        ));
+        return $this->json(['status' => 200, 'data' => $personal]);
     }
 
     /**
-     * Creates a new sheet entity.
-     *
-     * @Route("/new", name="sheet_new")
-     * @Method({"GET", "POST"})
+     * @Rest\Get("/get-movements-by-personal/{id}")
      */
-    public function newAction(Request $request)
+    public function getMovementsByPersonal(Request $request, int $id)
     {
-        $sheet = new Sheet();
-        $form = $this->createForm('AppBundle\Form\SheetType', $sheet);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($sheet);
-            $em->flush();
-
-            return $this->redirectToRoute('sheet_show', array('id' => $sheet->getId()));
+        try {
+            $params = $request->query->all();
+            $movements = $this->assistanceService->getMovementsByPersonal($id, $params);
+        } catch (\Exception $e) {
+            return $this->json(['status' => 400, 'Message' => $e->getMessage()]);
         }
 
-        return $this->render('sheet/new.html.twig', array(
-            'sheet' => $sheet,
-            'form' => $form->createView(),
-        ));
+        return $this->json(['status' => 200, 'data' => $movements]);
     }
 
     /**
-     * Finds and displays a sheet entity.
-     *
-     * @Route("/{id}", name="sheet_show")
-     * @Method("GET")
+     * @Rest\Post("/create-movement-type")
      */
-    public function showAction(Sheet $sheet)
+    public function createMovementType(Request $request)
     {
-        $deleteForm = $this->createDeleteForm($sheet);
-
-        return $this->render('sheet/show.html.twig', array(
-            'sheet' => $sheet,
-            'delete_form' => $deleteForm->createView(),
-        ));
-    }
-
-    /**
-     * Displays a form to edit an existing sheet entity.
-     *
-     * @Route("/{id}/edit", name="sheet_edit")
-     * @Method({"GET", "POST"})
-     */
-    public function editAction(Request $request, Sheet $sheet)
-    {
-        $deleteForm = $this->createDeleteForm($sheet);
-        $editForm = $this->createForm('AppBundle\Form\SheetType', $sheet);
-        $editForm->handleRequest($request);
-
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
-
-            return $this->redirectToRoute('sheet_show', array('id' => $sheet->getId()));
+        try {
+            $params = json_decode($request->getContent(), true);
+            $this->assistanceService->createMovementType($params);
+        } catch (\Exception $e) {
+            return $this->json(['status' => 400, 'Message' => $e->getMessage()]);
         }
 
-        return $this->render('sheet/edit.html.twig', array(
-            'sheet' => $sheet,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
-    }
-
-    /**
-     * Deletes a sheet entity.
-     *
-     * @Route("/{id}", name="sheet_delete")
-     * @Method("DELETE")
-     */
-    public function deleteAction(Request $request, Sheet $sheet)
-    {
-        $form = $this->createDeleteForm($sheet);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($sheet);
-            $em->flush();
-        }
-
-        return $this->redirectToRoute('sheet_index');
-    }
-
-    /**
-     * Creates a form to delete a sheet entity.
-     *
-     * @param Sheet $sheet The sheet entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Sheet $sheet)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('sheet_delete', array('id' => $sheet->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
+        return $this->json(['status' => 201, 'Message' => 'Movimiento registrado con éxito']);
     }
 }

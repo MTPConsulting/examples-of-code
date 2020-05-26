@@ -1,60 +1,173 @@
 <?php
 
-$nombreAux = isset($_POST['nombre']);
-$emailAux = isset($_POST['email']);
-$telefonoAux = isset($_POST['telefono']);
-$consultaAux = isset($_POST['consulta']);
+namespace Seny\Paginate;
 
-if($nombreAux && $emailAux && $telefonoAux && $consultaAux){
+use Seny\Paginate\Configuration;
+use Seny\Paginate\Exception;
+use Seny\Paginate\LoaderInterface;
 
-	$emptyNombre = empty($_POST['nombre']);
-	$emptyEmail = empty($_POST['email']);
-	$emptyTelefono = empty($_POST['telefono']);
-	$emptyConsulta = empty($_POST['consulta']);
+/**
+ * @author Martín Peveri <martinpeveri@gmail.com>
+ */
+final class Pager
+{
+    /**
+     * @var LoaderInterface
+     *
+     * Loader for work
+     */
+    private $loader;
 
-	if(!$emptyNombre && !$emptyEmail && !$emptyTelefono && !$emptyConsulta){
-		//Datos de destino
-		$email_destino = "";
+    /**
+     * @var Configuration
+     *
+     * Configuration object
+     */
+    private $config;
 
-		//Obtengo los datos a enviar
-		$nombre = $_POST['nombre'];
-		$email = $_POST['email'];
-		$telefono = $_POST['telefono'];
-		$consultaAux = $_POST['consulta'];
+    /**
+     * @var int
+     *
+     * Current page
+     */
+    private $page = 1;
 
-		//Armo el email
-		$consulta = "";
-		$consulta = $consulta . "Nombre: " . $nombre . " <br>";
-		$consulta = $consulta . "Email: " . $email . " <br>";
-		$consulta = $consulta . "Tel: " . $telefono . " <br>";
-		$consulta = $consulta . "Mensaje: " . $consultaAux . " <br>";
+    /**
+     * @var int
+     *
+     * Current position array
+     */
+    private $position = 0;
 
-		$from = $email;
-		$to = $email_destino;
-		$name = "Example";
-		$subject = "Email desde Example ONLine";
-		$message = $consulta;
+    public function __construct(LoaderInterface $loader, Configuration $config)
+    {
+        $this->loader = $loader;
+        $this->config = $config;
+    }
 
-		//Envío el email
-		$from_user = "=?UTF-8?B?".base64_encode($from)."?=";
-	    $subject = "=?UTF-8?B?".base64_encode($subject)."?=";
+    public function getPageSize() : int
+    {
+        return $this->config->getSize();
+    }
 
-	    $headers = "From: $from <$from>\r\n". 
-	               "MIME-Version: 1.0" . "\r\n" . 
-	               "Content-type: text/html; charset=UTF-8" . "\r\n"; 
+    public function getCurrentPage() : int
+    {
+        return $this->page;
+    }
 
-	    $resultado = mail($to, $subject, $message, $headers); 
-		if($resultado){
-			echo '<h4 class="alert-heading"><i class="fa fa-info-circle"></i>' . " Se envió el email con éxito.</h4>";
-		}else{
-			echo '<h4 class="alert-heading"><i class="fa fa-info-circle"></i>' . " Error al enviar el email.</h4>";
-		}
-	}else{
-		echo '<h4 class="alert-heading"><i class="fa fa-info-circle"></i>' . " Todos los campos del formulario son obligatorios.</h4>";
-	}
-}else{
-	echo '<h4 class="alert-heading"><i class="fa fa-info-circle"></i>' . " Datos incorrectos.</h4>";
+    public function getCurrentItems() : array
+    {
+        $size = $this->config->getSize();
+        $page = $this->getCurrentPage();
+        $data = $this->loader->getCurrentItems($size, $page, $this->position, $this->config->getItems());
+
+        return $data;
+    }
+
+    public function getNextPage() : int
+    {
+        $page = $this->getCurrentPage();
+        if ($page < $this->getTotalPages()) {
+            $page++;
+        }
+
+        return $page;
+    }
+
+    public function getPreviousPage() : int
+    {
+        $page = $this->getCurrentPage();
+        if ($page > 1) {
+            $page--;
+        }
+
+        return $page;
+    }
+
+    public function next() : int
+    {
+        if ($this->page < $this->getTotalPages()) {
+            $this->page++;
+        }
+
+        $this->setPage($this->page, true);
+
+        return $this->page;
+    }
+
+    public function previous() : int
+    {
+        if ($this->page > 1) {
+            $this->page--;
+        }
+
+        $this->setPage($this->page, true);
+
+        return $this->page;
+    }
+
+    public function last() : int
+    {
+        $this->setPage($this->getTotalPages(), false);
+        return $this->page;
+    }
+
+    public function first() : int
+    {
+        $this->setPage(1, false);
+        return $this->page;
+    }
+
+    public function setPage(int $page, bool $restPage = false) : int
+    {
+        if ($page > 0 && $page <= $this->getTotalPages()) {
+            $this->page = $page;
+
+            $p = $page;
+            if ($restPage) {
+                $p -= 1;
+            }
+
+            $this->position = ($p * $this->config->getSize());
+        } else {
+            throw new Exception("Page $page does not exist.");
+        }
+
+        return $this->page;
+    }
+
+    /**
+     * Get total pages
+     *
+     * @return int
+     */
+    public function getTotalPages() : int
+    {
+        return ceil($this->getTotalItems() / $this->config->getSize());
+    }
+    
+    /**
+     * Get total items
+     *
+     * @return int
+     */
+    public function getTotalItems() : int
+    {
+        return $this->loader->count($this->config->getItems());
+    }
+
+    public function getTotalItemsPage() : int
+    {
+        return $this->loader->count($this->getCurrentItems());
+    }
+
+    public function pageExists(int $page) : bool
+    {
+        $exists = false;
+        if ($page > 0 && $page <= $this->getTotalPages()) {
+            $exists = true;
+        }
+
+        return $exists;
+    }
 }
-
-
-?>

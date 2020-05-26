@@ -235,8 +235,8 @@ class TopicViewSet(viewsets.ModelViewSet):
                 })
         else:
             raise PermissionDenied({
-                    "message": "The user is invalid"
-                })
+                "message": "The user is invalid"
+            })
 
 
 class RegisterViewSet(viewsets.ModelViewSet):
@@ -314,8 +314,8 @@ class RegisterViewSet(viewsets.ModelViewSet):
             return super(RegisterViewSet, self).create(request, **kwargs)
         else:
             raise PermissionDenied({
-                    "message": "The user is invalid"
-                })
+                "message": "The user is invalid"
+            })
 
     def perform_create(self, serializer):
         request = self.request
@@ -412,8 +412,8 @@ class CommentViewSet(viewsets.ModelViewSet):
             )
         else:
             raise PermissionDenied({
-                    "message": "Error: User incorrect."
-                })
+                "message": "Error: User incorrect."
+            })
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -534,6 +534,7 @@ class CheckPermissionsForumUserView(APIView):
     """
     Check the permissions that a user has in a forum private
     """
+
     def get(self, request, format=None):
         response = {
             'register': False,
@@ -756,6 +757,7 @@ class GetTotalPendingNotificationsUser(APIView):
     """
     Get total pending notification user
     """
+
     def get(self, request, format=None):
         # Parameters
         user_id = self.request.GET.get('user_id')
@@ -782,6 +784,7 @@ class UpdateSeenNotifications(APIView):
     """
     Update is_seen property in notification by user
     """
+
     def post(self, request, format=None):
         user_id = self.request.POST.get('user_id')
         if user_id:
@@ -804,6 +807,7 @@ class UploadsView(APIView):
     """
     Upload files in editor
     """
+
     def post(self, request, format=None):
         urls = []
         if request.user.is_authenticated:
@@ -822,6 +826,7 @@ class GetForumsByUser(APIView):
     """
     Get forums member user
     """
+
     def get(self, request, format=None):
         # Parameters
         username = self.request.GET.get('username')
